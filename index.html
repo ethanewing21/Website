@@ -1,53 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Ethan's Site</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
     <link rel="stylesheet" href="WebsiteStyle.css">
 </head>
 
 <body>
-    <div class="content">
-        <h1>Ethan's Website</h1>
-        <p>Hello Spencer, welcome to my site!</p>
-        <div class="square"></div>
+    <div class="game-container">
+        <h1>Tic Tac Toe</h1>
+        <p id="game-status">Player X's Turn</p>
+        <div class="board">
+            <div class="cell" data-cell></div>
+            <div class="cell" data-cell></div>
+            <div class="cell" data-cell></div>
+            <div class="cell" data-cell></div>
+            <div class="cell" data-cell></div>
+            <div class="cell" data-cell></div>
+            <div class="cell" data-cell></div>
+            <div class="cell" data-cell></div>
+            <div class="cell" data-cell></div>
+        </div>
+        <button id="restart-button">Restart Game</button>
     </div>
-
-    <div class="wrapper">
-        <ul class="inner">
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li class="switch"></li>
-            <li class="switch"></li>
-            <li class="switch"></li>
-            <li class="switch"></li>
-            <li class="switch"></li>
-            <li class="switch"></li>
-            <li class="switch"></li>
-            <li class="switch"></li>
-            <li class="switch"></li>
-        </ul>
-    </div>
+    <script src="tic-tac-toe.js"></script>
 </body>
 
 </html>
