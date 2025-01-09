@@ -10,11 +10,21 @@
   <h1>Ethan's Website</h1>
   <p>This is a square</p>
   <div class="square" id="square"></div>
-  <button onclick="changeColor()">Change Color to Red</button>
+  <button onclick="changeColor()">Change Color</button>
 
   <script>
+    const colors = ["red", "blue", "purple", "green"];
+    let currentColorIndex = 0;
+
     function changeColor() {
-      document.getElementById("square").style.backgroundColor = "red";
+      // Get the square element
+      const square = document.getElementById("square");
+
+      // Update the square's background color
+      square.style.backgroundColor = colors[currentColorIndex];
+
+      // Move to the next color in the array
+      currentColorIndex = (currentColorIndex + 1) % colors.length; // Loop back to the start
     }
   </script>
 </body>
