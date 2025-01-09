@@ -5,7 +5,7 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
+    background-color: #6291e8;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -15,6 +15,7 @@ body {
 /* Main content container */
 .content {
     text-align: center;
+    color: #ffffff;
 }
 
 header {
@@ -24,6 +25,7 @@ header {
     text-align: center;
 }
 
+/* Navigation styling (optional, not used in your HTML) */
 nav {
     display: flex;
     justify-content: center;
@@ -41,33 +43,12 @@ nav a:hover {
     background-color: #555;
 }
 
-main {
-    padding: 20px;
-}
-
-footer {
-    background-color: #333;
-    color: #fff;
-    text-align: center;
-    padding: 10px 0;
-    position: fixed;
-    width: 100%;
-    bottom: 0;
-}
-
-/* Main content container */
-.content {
-    text-align: center;
-}
-
 /* Add a square in the middle */
 .square {
     width: 150px;
-    /* Adjust size if needed */
     height: 150px;
-    background-color: #333;
-    /* Adjust color if needed */
+    background-color: #d62222;
+    /* Red square */
     margin: 20px auto;
-    /* Add spacing */
     display: inline-block;
 }
