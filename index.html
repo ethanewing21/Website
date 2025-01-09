@@ -8,8 +8,15 @@
 
 <body>
   <h1>Ethan's Website</h1>
-  <p>This is the square</p>
-  <div class="square"></div>
+  <p>This is a square</p>
+  <div class="square" id="square"></div>
+  <button onclick="changeColor()">Change Color to Red</button>
+
+  <script>
+    function changeColor() {
+      document.getElementById("square").style.backgroundColor = "red";
+    }
+  </script>
 </body>
 
 </html>
