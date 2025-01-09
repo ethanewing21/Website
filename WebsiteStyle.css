@@ -4,3 +4,12 @@ body {
   background-color: #f0f0f0;
   color: #333;
 }
+
+.square {
+  width: 100px;
+  height: 100px;
+  background-color: #4CAF50;
+  /* Green background */
+  margin: 20px auto;
+  /* Center the square horizontally */
+}
