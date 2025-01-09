@@ -7,4 +7,4 @@ This is a basic website created as a learning project and hosted using GitHub Pa
 - Hosted for free on GitHub Pages
 
 ## Live Website
-Visit the website here: [My Simple Website](https://<your-username>.github.io/<repository-name>/)
+Visit the website here: [My Simple Website](https://ethanewing21.github.io/Website/)
