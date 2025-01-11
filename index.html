@@ -8,7 +8,7 @@
 
 <body>
   <h1>Ethan's Website</h1>
-  <p>This is a square</p>
+  <p>This is now a heart</p>
   <div class="square" id="square"></div>
   <button onclick="changeColor()">Change Color</button>
 
@@ -17,14 +17,14 @@
     let currentColorIndex = 0;
 
     function changeColor() {
-      // Get the square element
+      // Get the heart element
       const square = document.getElementById("square");
 
-      // Update the square's background color
+      // Update the heart's background color
       square.style.backgroundColor = colors[currentColorIndex];
 
       // Move to the next color in the array
-      currentColorIndex = (currentColorIndex + 1) % colors.length; // Loop back to the start
+      currentColorIndex = (currentColorIndex + 1) % colors.length;
     }
   </script>
 </body>

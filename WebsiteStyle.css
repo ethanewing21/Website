@@ -5,15 +5,48 @@ body {
   color: #333;
 }
 
+/* Turn the square into a heart */
 .square {
   width: 100px;
-  height: 100px;
+  /* adjust as needed */
+  height: 90px;
+  /* adjust as needed */
   background-color: #4CAF50;
-  /* Default color */
+  position: relative;
+  transform: rotate(-45deg);
+  /* rotate the base shape */
   margin: 20px auto;
-  /* Center the square horizontally */
+  /* center it horizontally */
 }
 
+/* Use ::before and ::after to create the top arcs of the heart */
+.square::before,
+.square::after {
+  content: "";
+  width: 100px;
+  height: 100px;
+  background-color: inherit;
+  /* use the parent’s background color */
+  position: absolute;
+  border-radius: 50%;
+  /* make them circular */
+}
+
+/* Position the left arc */
+.square::before {
+  top: -50px;
+  /* move it up */
+  left: 0;
+}
+
+/* Position the right arc */
+.square::after {
+  top: -50px;
+  left: 50px;
+  /* shift it right */
+}
+
+/* Style your button */
 button {
   padding: 10px 20px;
   font-size: 16px;
