@@ -37,7 +37,7 @@ body {
 
 /* Right arc */
 .heart::after {
-  top: 0px;
+  top: -10px;
   left: 50px;
 }
 
