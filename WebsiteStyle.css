@@ -6,44 +6,36 @@ body {
 }
 
 /* Turn the square into a heart */
-.square {
-  width: 100px;
-  /* adjust as needed */
-  height: 90px;
-  /* adjust as needed */
-  background-color: #4CAF50;
+.heart {
   position: relative;
+  width: 100px;
+  height: 90px;
+  background-color: #4CAF50;
   transform: rotate(-45deg);
-  /* rotate the base shape */
-  margin: 20px auto;
-  /* center it horizontally */
+  margin: 50px auto;
 }
 
 /* Use ::before and ::after to create the top arcs of the heart */
-.square::before,
-.square::after {
+.heart::before,
+.heart::after {
   content: "";
+  position: absolute;
   width: 100px;
   height: 100px;
-  background-color: inherit;
-  /* use the parent’s background color */
-  position: absolute;
+  background-color: #4CAF50;
   border-radius: 50%;
-  /* make them circular */
 }
 
 /* Position the left arc */
-.square::before {
+.heart::before {
   top: -50px;
-  /* move it up */
   left: 0;
 }
 
 /* Position the right arc */
-.square::after {
-  top: -0px;
+.heart::after {
+  top: 0;
   left: 50px;
-  /* shift it right */
 }
 
 /* Style your button */
