@@ -41,8 +41,8 @@ body {
 
 /* Position the right arc */
 .square::after {
-  top: -50px;
-  left: 100px;
+  top: -0px;
+  left: 50px;
   /* shift it right */
 }
 
