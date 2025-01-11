@@ -9,7 +9,7 @@ body {
 .heart {
   position: relative;
   width: 100px;
-  height: 90px;
+  height: 100px;
   background-color: #4CAF50;
   transform: rotate(-45deg);
   margin: 50px auto;
