@@ -37,10 +37,8 @@ body {
 
 /* Right arc */
 .heart::after {
-  top: -25px;
-  /* Align it with the left arc */
+  top: 0px;
   left: 50px;
-  /* Shift half its width to the right */
 }
 
 /* Button styling */
