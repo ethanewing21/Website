@@ -31,7 +31,7 @@ body {
 
 /* Left arc */
 .heart::before {
-  top: -50px;
+  top: -1000px;
   left: 0;
 }
 
