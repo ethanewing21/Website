@@ -37,7 +37,6 @@ body {
 .heart::after {
   top: 50px;
   left: 0px;
-  transform: rotate(180deg);
 }
 
 /* Button styling */
