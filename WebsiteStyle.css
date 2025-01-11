@@ -11,10 +11,8 @@ body {
   width: 100px;
   height: 90px;
   background-color: #4CAF50;
-  /* Base color */
   transform: rotate(-45deg);
   margin: 50px auto;
-  /* Center the heart horizontally */
 }
 
 /* The top arcs of the heart */
@@ -31,14 +29,15 @@ body {
 
 /* Left arc */
 .heart::before {
-  top: -1000px;
+  top: -50px;
   left: 0;
 }
 
 /* Right arc */
 .heart::after {
-  top: -10px;
+  top: -50px;
   left: 50px;
+  transform: rotate(90deg);
 }
 
 /* Button styling */
