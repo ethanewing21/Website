@@ -35,8 +35,8 @@ body {
 
 /* Right arc */
 .heart::after {
-  top: 50px;
-  left: 0px;
+  top: -50px;
+  left: 50px;
 }
 
 /* Button styling */
