@@ -5,40 +5,6 @@ body {
   color: #333;
 }
 
-/* A rotated heart container */
-.heart {
-  position: relative;
-  width: 100px;
-  height: 100px;
-  background-color: #4CAF50;
-  transform: rotate(-45deg);
-  margin: 50px auto;
-}
-
-/* The top arcs of the heart */
-.heart::before,
-.heart::after {
-  content: "";
-  position: absolute;
-  width: 100px;
-  height: 100px;
-  background-color: inherit;
-  /* Same color as parent */
-  border-radius: 50%;
-}
-
-/* Left arc */
-.heart::before {
-  top: -50px;
-  left: 0;
-}
-
-/* Right arc */
-.heart::after {
-  top: -50px;
-  left: 50px;
-}
-
 /* Button styling */
 button {
   padding: 10px 20px;

@@ -8,32 +8,11 @@
 
 <body>
   <h1>Ethan's Website</h1>
-  <p>This is heart</p>
-  <!-- Only ONE element for the heart, with an ID so JS can find it -->
-  <div class="heart" id="heart"></div>
-  <div class="heart"></div>
-
   <h2 class="you-are">You are ___</h2>
   <div class="circles">
     <div class="circle"></div>
     <div class="circle"></div>
   </div>
-
-  <button onclick="changeColor()">Change Color</button>
-
-  <script>
-    const colors = ["red", "blue", "purple", "green"];
-    let currentColorIndex = 0;
-
-    function changeColor() {
-      // Target the heart by its ID
-      const heart = document.getElementById("heart");
-      // Update the heart's background color
-      heart.style.backgroundColor = colors[currentColorIndex];
-      // Move to the next color
-      currentColorIndex = (currentColorIndex + 1) % colors.length;
-    }
-  </script>
 </body>
 
 </html>
