@@ -42,7 +42,7 @@ button:hover {
   height: 180px;
   border-radius: 50%;
   background-color: #4CAF50;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 20px rgba(215, 36, 36, 0.838);
 }
 
 @media (max-width: 480px) {
