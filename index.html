@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Money Tracker Pro - Cloud Sync</title>
+  <title>Money Tracker Pro - Local First</title>
   <style>
     * {
       margin: 0;
@@ -33,6 +33,7 @@
       color: white;
       padding: 30px;
       text-align: center;
+      position: relative;
     }
 
     .header h1 {
@@ -59,6 +60,16 @@
     .sync-status.syncing {
       background: rgba(241, 196, 15, 0.3);
       color: #f1c40f;
+    }
+
+    .sync-status.offline {
+      background: rgba(231, 76, 60, 0.3);
+      color: #e74c3c;
+    }
+
+    .sync-status.local-first {
+      background: rgba(52, 152, 219, 0.3);
+      color: #3498db;
     }
 
     .period-selector {
@@ -477,6 +488,32 @@
       color: white;
     }
 
+    .offline-indicator {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #e74c3c;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 25px;
+      font-size: 0.9em;
+      display: none;
+      z-index: 1000;
+    }
+
+    .sync-pending {
+      position: fixed;
+      bottom: 70px;
+      right: 20px;
+      background: #f39c12;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 0.8em;
+      display: none;
+      z-index: 1000;
+    }
+
     @media (max-width: 768px) {
       .main-content {
         grid-template-columns: 1fr;
@@ -503,10 +540,18 @@
 </head>
 
 <body>
+  <div class="offline-indicator" id="offlineIndicator">
+    📶 Offline - Changes saved locally
+  </div>
+
+  <div class="sync-pending" id="syncPending">
+    ⏳ Changes pending sync...
+  </div>
+
   <div class="container">
     <div class="header">
       <div class="user-id-display" id="userIdDisplay">Loading...</div>
-      <div class="sync-status" id="syncStatus">Connecting...</div>
+      <div class="sync-status" id="syncStatus">Local First</div>
       <h1>💰 Money Tracker Pro</h1>
 
       <div class="period-selector">
@@ -635,7 +680,7 @@
     const userId = getUserId();
     document.getElementById('userIdDisplay').textContent = `User: ${userId}`;
 
-    // Data storage references
+    // LOCAL-FIRST ARCHITECTURE
     let transactions = [];
     let categories = {
       expense: ['Food', 'Transportation', 'Entertainment', 'Shopping', 'Bills'],
@@ -646,107 +691,189 @@
     let currentType = 'expense';
     let editingCategory = null;
 
-    // Firebase sync functions
-    function saveToFirebase(path, data) {
+    // Sync state
+    let isOnline = true;
+    let syncQueue = [];
+    let isSyncing = false;
+
+    // LOCAL STORAGE KEYS
+    const LOCAL_KEYS = {
+      transactions: `money_tracker_${userId}_transactions`,
+      categories: `money_tracker_${userId}_categories`,
+      periods: `money_tracker_${userId}_periods`,
+      syncQueue: `money_tracker_${userId}_sync_queue`
+    };
+
+    // LOCAL STORAGE FUNCTIONS
+    function saveLocal(key, data) {
+      try {
+        localStorage.setItem(key, JSON.stringify(data));
+        return true;
+      } catch (e) {
+        console.warn('Local storage failed:', e);
+        return false;
+      }
+    }
+
+    function loadLocal(key, defaultValue = null) {
+      try {
+        const data = localStorage.getItem(key);
+        return data ? JSON.parse(data) : defaultValue;
+      } catch (e) {
+        console.warn('Local storage load failed:', e);
+        return defaultValue;
+      }
+    }
+
+    // INSTANT LOCAL SAVE - Always works immediately
+    function saveInstantly(type, data) {
+      // Save to local storage first (instant)
+      let saved = false;
+      switch (type) {
+        case 'transactions':
+          transactions = data;
+          saved = saveLocal(LOCAL_KEYS.transactions, data);
+          break;
+        case 'categories':
+          categories = data;
+          saved = saveLocal(LOCAL_KEYS.categories, data);
+          break;
+        case 'periods':
+          periods = data;
+          saved = saveLocal(LOCAL_KEYS.periods, data);
+          break;
+      }
+
+      // Queue for cloud sync (background)
+      if (saved) {
+        queueForSync(type, data);
+        updateSyncStatus('local-first');
+        setTimeout(() => updateSyncStatus(isOnline ? 'connected' : 'offline'), 1000);
+      }
+
+      return saved;
+    }
+
+    // CLOUD SYNC QUEUE
+    function queueForSync(type, data) {
+      const syncItem = {
+        type: type,
+        data: data,
+        timestamp: Date.now(),
+        userId: userId
+      };
+
+      syncQueue.push(syncItem);
+      saveLocal(LOCAL_KEYS.syncQueue, syncQueue);
+
+      // Try to sync immediately if online
+      if (isOnline && !isSyncing) {
+        processSyncQueue();
+      } else {
+        showSyncPending();
+      }
+    }
+
+    // PROCESS SYNC QUEUE
+    async function processSyncQueue() {
+      if (isSyncing || syncQueue.length === 0) return;
+
+      isSyncing = true;
       updateSyncStatus('syncing');
-      return database.ref(`${userId}/${path}`).set(data)
-        .then(() => updateSyncStatus('connected'))
-        .catch(error => {
-          console.error('Firebase save error:', error);
-          updateSyncStatus('error');
-        });
-    }
 
-    function loadFromFirebase(path) {
-      return database.ref(`${userId}/${path}`).once('value')
-        .then(snapshot => {
+      const item = syncQueue[0];
+
+      try {
+        await database.ref(`${userId}/${item.type}`).set(item.data);
+
+        // Success - remove from queue
+        syncQueue.shift();
+        saveLocal(LOCAL_KEYS.syncQueue, syncQueue);
+
+        if (syncQueue.length === 0) {
+          hideSyncPending();
           updateSyncStatus('connected');
-          return snapshot.val() || null;
-        })
-        .catch(error => {
-          console.error('Firebase load error:', error);
-          updateSyncStatus('error');
-          return null;
-        });
+        } else {
+          // Process next item
+          setTimeout(() => processSyncQueue(), 100);
+        }
+      } catch (error) {
+        console.error('Sync failed:', error);
+        updateSyncStatus('offline');
+        // Keep item in queue for retry
+      } finally {
+        isSyncing = false;
+      }
     }
 
-    function listenToFirebase(path, callback) {
-      database.ref(`${userId}/${path}`).on('value', snapshot => {
-        updateSyncStatus('connected');
-        callback(snapshot.val() || null);
+    // FIREBASE LISTENERS (for multi-device sync)
+    function setupFirebaseListeners() {
+      // Listen for changes from other devices
+      database.ref(`${userId}/transactions`).on('value', snapshot => {
+        const cloudData = snapshot.val();
+        if (cloudData && JSON.stringify(cloudData) !== JSON.stringify(transactions)) {
+          transactions = cloudData;
+          saveLocal(LOCAL_KEYS.transactions, cloudData);
+          updateCategoryTotals();
+          updateTransactionsList();
+          updateGrandTotal();
+          updateSyncStatus('connected');
+        }
+      });
+
+      database.ref(`${userId}/categories`).on('value', snapshot => {
+        const cloudData = snapshot.val();
+        if (cloudData && JSON.stringify(cloudData) !== JSON.stringify(categories)) {
+          categories = cloudData;
+          saveLocal(LOCAL_KEYS.categories, cloudData);
+          updateCategorySelect();
+          displayExistingCategories();
+          updateCategoryTotals();
+        }
+      });
+
+      database.ref(`${userId}/periods`).on('value', snapshot => {
+        const cloudData = snapshot.val();
+        if (cloudData && JSON.stringify(cloudData) !== JSON.stringify(periods)) {
+          periods = cloudData;
+          saveLocal(LOCAL_KEYS.periods, cloudData);
+          updatePeriodsList();
+        }
       });
     }
 
+    // UPDATE SYNC STATUS
     function updateSyncStatus(status) {
       const syncElement = document.getElementById('syncStatus');
       switch (status) {
         case 'connected':
-          syncElement.textContent = '● Connected';
+          syncElement.textContent = '● Cloud Synced';
           syncElement.className = 'sync-status connected';
           break;
         case 'syncing':
           syncElement.textContent = '● Syncing...';
           syncElement.className = 'sync-status syncing';
           break;
-        case 'error':
-          syncElement.textContent = '● Offline';
-          syncElement.className = 'sync-status';
+        case 'offline':
+          syncElement.textContent = '● Local Only';
+          syncElement.className = 'sync-status offline';
+          break;
+        case 'local-first':
+          syncElement.textContent = '● Saved Locally';
+          syncElement.className = 'sync-status local-first';
           break;
       }
     }
 
-    // Initialize the app
-    document.addEventListener('DOMContentLoaded', function () {
-      // Set today's date as default
-      document.getElementById('date').valueAsDate = new Date();
+    function showSyncPending() {
+      document.getElementById('syncPending').style.display = 'block';
+    }
 
-      // Load data from Firebase
-      Promise.all([
-        loadFromFirebase('transactions'),
-        loadFromFirebase('categories'),
-        loadFromFirebase('periods')
-      ]).then(([txData, catData, perData]) => {
-        if (txData) transactions = txData;
-        if (catData) categories = catData;
-        if (perData) periods = perData;
+    function hideSyncPending() {
+      document.getElementById('syncPending').style.display = 'none';
+    }
 
-        // Set up real-time listeners
-        listenToFirebase('transactions', data => {
-          if (data) {
-            transactions = data;
-            updateCategoryTotals();
-            updateTransactionsList();
-            updateGrandTotal();
-          }
-        });
-
-        listenToFirebase('categories', data => {
-          if (data) {
-            categories = data;
-            updateCategorySelect();
-            displayExistingCategories();
-            updateCategoryTotals();
-          }
-        });
-
-        listenToFirebase('periods', data => {
-          if (data) {
-            periods = data;
-            updatePeriodsList();
-          }
-        });
-
-        // Initial UI update
-        updateCategorySelect();
-        displayExistingCategories();
-        updatePeriodsList();
-        updateCategoryTotals();
-        updateTransactionsList();
-        updateGrandTotal();
-      });
-    });
-
-    // Period management functions
+    // PERIOD MANAGEMENT
     function showPeriodManager() {
       document.getElementById('periodForm').style.display = 'block';
     }
@@ -780,7 +907,7 @@
       };
 
       periods.push(period);
-      saveToFirebase('periods', periods);
+      saveInstantly('periods', periods);
 
       // Clear form
       document.getElementById('periodName').value = '';
@@ -792,7 +919,7 @@
     function updatePeriodsList() {
       const periodList = document.getElementById('periodList');
       let html = `
-                <div class="period-item ${!currentPeriod ? 'active' : ''}" onclick="selectPeriod(null)">
+                <div class="period-item active" onclick="selectPeriod(null)">
                     <span>All Time</span>
                     <span>∞</span>
                 </div>
@@ -843,7 +970,7 @@
       });
     }
 
-    // Set transaction type
+    // SET TRANSACTION TYPE
     function setType(type) {
       currentType = type;
       document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('active'));
@@ -852,7 +979,7 @@
       displayExistingCategories();
     }
 
-    // Update category dropdown
+    // UPDATE CATEGORY DROPDOWN
     function updateCategorySelect() {
       const categorySelect = document.getElementById('category');
       categorySelect.innerHTML = '<option value="">Select a category</option>';
@@ -865,7 +992,7 @@
       });
     }
 
-    // Display existing categories with edit/delete options
+    // DISPLAY EXISTING CATEGORIES
     function displayExistingCategories() {
       const container = document.getElementById('existingCategories');
       let html = `<h4>Existing ${currentType} categories:</h4>`;
@@ -890,14 +1017,14 @@
       container.innerHTML = html;
     }
 
-    // Add new category
+    // ADD NEW CATEGORY
     function addCategory() {
       const input = document.getElementById('newCategoryName');
       const categoryName = input.value.trim();
 
       if (categoryName && !categories[currentType].includes(categoryName)) {
         categories[currentType].push(categoryName);
-        saveToFirebase('categories', categories);
+        saveInstantly('categories', categories);
         input.value = '';
 
         // Show confirmation
@@ -911,7 +1038,7 @@
       }
     }
 
-    // Edit category
+    // EDIT CATEGORY
     function editCategory(categoryName) {
       // Hide all other edit forms
       document.querySelectorAll('.edit-category-form').forEach(form => {
@@ -924,7 +1051,7 @@
       editingCategory = categoryName;
     }
 
-    // Save category edit
+    // SAVE CATEGORY EDIT
     function saveCategoryEdit(oldCategoryName) {
       const inputId = `editInput-${oldCategoryName.replace(/\s+/g, '-')}`;
       const newCategoryName = document.getElementById(inputId).value.trim();
@@ -934,7 +1061,7 @@
         const index = categories[currentType].indexOf(oldCategoryName);
         if (index > -1) {
           categories[currentType][index] = newCategoryName;
-          saveToFirebase('categories', categories);
+          saveInstantly('categories', categories);
         }
 
         // Update transactions that use this category
@@ -943,27 +1070,27 @@
             transaction.category = newCategoryName;
           }
         });
-        saveToFirebase('transactions', transactions);
+        saveInstantly('transactions', transactions);
       }
 
       cancelCategoryEdit(oldCategoryName);
     }
 
-    // Cancel category edit
+    // CANCEL CATEGORY EDIT
     function cancelCategoryEdit(categoryName) {
       const formId = `editForm-${categoryName.replace(/\s+/g, '-')}`;
       document.getElementById(formId).style.display = 'none';
       editingCategory = null;
     }
 
-    // Delete category
+    // DELETE CATEGORY
     function deleteCategory(categoryName) {
       if (confirm(`Are you sure you want to delete the category "${categoryName}"? All transactions in this category will be preserved but will show "Unknown" as the category.`)) {
         // Remove from categories array
         const index = categories[currentType].indexOf(categoryName);
         if (index > -1) {
           categories[currentType].splice(index, 1);
-          saveToFirebase('categories', categories);
+          saveInstantly('categories', categories);
         }
 
         // Update transactions that use this category to "Unknown"
@@ -972,17 +1099,17 @@
             transaction.category = 'Unknown';
           }
         });
-        saveToFirebase('transactions', transactions);
+        saveInstantly('transactions', transactions);
 
         // Add "Unknown" category if it doesn't exist
         if (!categories[currentType].includes('Unknown')) {
           categories[currentType].push('Unknown');
-          saveToFirebase('categories', categories);
+          saveInstantly('categories', categories);
         }
       }
     }
 
-    // Add transaction
+    // ADD TRANSACTION - LOCAL FIRST!
     document.getElementById('transactionForm').addEventListener('submit', function (e) {
       e.preventDefault();
 
@@ -995,15 +1122,16 @@
         date: document.getElementById('date').value
       };
 
+      // INSTANT LOCAL SAVE
       transactions.unshift(transaction);
-      saveToFirebase('transactions', transactions);
+      saveInstantly('transactions', transactions);
 
-      // Reset form
+      // Reset form immediately
       this.reset();
       document.getElementById('date').valueAsDate = new Date();
     });
 
-    // Update category totals
+    // UPDATE DISPLAYS
     function updateCategoryTotals() {
       const totalsContainer = document.getElementById('categoryTotals');
       const filteredTransactions = getFilteredTransactions();
@@ -1043,7 +1171,6 @@
       totalsContainer.innerHTML = html;
     }
 
-    // Update transactions list
     function updateTransactionsList() {
       const listContainer = document.getElementById('transactionsList');
       const filteredTransactions = getFilteredTransactions();
@@ -1078,7 +1205,6 @@
       listContainer.innerHTML = html;
     }
 
-    // Update grand total
     function updateGrandTotal() {
       const filteredTransactions = getFilteredTransactions();
       const grandTotal = filteredTransactions.reduce((total, transaction) => {
@@ -1092,11 +1218,55 @@
       grandTotalElement.className = `grand-total ${grandTotal >= 0 ? 'positive' : 'negative'}`;
     }
 
-    // Delete transaction
+    // DELETE TRANSACTION
     function deleteTransaction(id) {
       transactions = transactions.filter(t => t.id !== id);
-      saveToFirebase('transactions', transactions);
+      saveInstantly('transactions', transactions);
     }
+
+    // MONITOR CONNECTION STATUS
+    window.addEventListener('online', () => {
+      isOnline = true;
+      document.getElementById('offlineIndicator').style.display = 'none';
+      processSyncQueue(); // Process any pending syncs
+    });
+
+    window.addEventListener('offline', () => {
+      isOnline = false;
+      document.getElementById('offlineIndicator').style.display = 'block';
+      updateSyncStatus('offline');
+    });
+
+    // INITIALIZATION
+    function initializeApp() {
+      // Load from local storage first (instant)
+      transactions = loadLocal(LOCAL_KEYS.transactions, []);
+      categories = loadLocal(LOCAL_KEYS.categories, categories);
+      periods = loadLocal(LOCAL_KEYS.periods, periods);
+      syncQueue = loadLocal(LOCAL_KEYS.syncQueue, []);
+
+      // Update UI immediately
+      updateCategorySelect();
+      displayExistingCategories();
+      updateCategoryTotals();
+      updateTransactionsList();
+      updateGrandTotal();
+      updatePeriodsList();
+
+      // Set up Firebase listeners for multi-device sync
+      setupFirebaseListeners();
+
+      // Process any pending syncs
+      if (isOnline && syncQueue.length > 0) {
+        processSyncQueue();
+      }
+
+      // Set today's date
+      document.getElementById('date').valueAsDate = new Date();
+    }
+
+    // START THE APP
+    initializeApp();
 
     // Add enter key support for category addition
     document.getElementById('newCategoryName').addEventListener('keypress', function (e) {
