@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Money Tracker</title>
+  <title>Money Tracker Pro - Cloud Sync</title>
   <style>
     * {
       margin: 0;
@@ -20,7 +20,7 @@
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1400px;
       margin: 0 auto;
       background: white;
       border-radius: 20px;
@@ -38,6 +38,56 @@
     .header h1 {
       font-size: 2.5em;
       margin-bottom: 10px;
+    }
+
+    .sync-status {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 0.9em;
+      backdrop-filter: blur(10px);
+    }
+
+    .sync-status.connected {
+      background: rgba(46, 204, 113, 0.3);
+      color: #2ecc71;
+    }
+
+    .sync-status.syncing {
+      background: rgba(241, 196, 15, 0.3);
+      color: #f1c40f;
+    }
+
+    .period-selector {
+      margin: 20px 0;
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .period-btn {
+      padding: 10px 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: all 0.3s;
+      backdrop-filter: blur(10px);
+    }
+
+    .period-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .period-btn.active {
+      background: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.6);
     }
 
     .grand-total {
@@ -60,7 +110,7 @@
 
     .main-content {
       display: grid;
-      grid-template-columns: 1fr 350px;
+      grid-template-columns: 1fr 400px;
       gap: 30px;
       padding: 30px;
     }
@@ -151,6 +201,28 @@
       transform: translateY(-2px);
     }
 
+    .btn-small {
+      padding: 8px 12px;
+      font-size: 12px;
+      border-radius: 5px;
+    }
+
+    .btn-danger {
+      background: #e74c3c;
+    }
+
+    .btn-danger:hover {
+      background: #c0392b;
+    }
+
+    .btn-edit {
+      background: #f39c12;
+    }
+
+    .btn-edit:hover {
+      background: #e67e22;
+    }
+
     .sidebar {
       display: flex;
       flex-direction: column;
@@ -191,14 +263,20 @@
       border-left-color: #2ecc71;
     }
 
+    .category-info {
+      flex: 1;
+    }
+
     .category-name {
       font-weight: 600;
       color: #2c3e50;
+      display: block;
     }
 
     .category-total {
       font-weight: bold;
       font-size: 1.1em;
+      margin-left: 10px;
     }
 
     .category-total.expense {
@@ -207,6 +285,11 @@
 
     .category-total.income {
       color: #2ecc71;
+    }
+
+    .category-actions {
+      display: flex;
+      gap: 5px;
     }
 
     .transactions-section {
@@ -316,6 +399,84 @@
       font-style: italic;
     }
 
+    .period-form {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 15px;
+      margin: 20px 0;
+      backdrop-filter: blur(10px);
+    }
+
+    .period-form h3 {
+      margin-bottom: 15px;
+      color: white;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .period-list {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 15px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .period-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      margin-bottom: 8px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .period-item:hover {
+      background: #e9ecef;
+    }
+
+    .period-item.active {
+      background: #667eea;
+      color: white;
+    }
+
+    .edit-category-form {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      background: #e9ecef;
+      border-radius: 5px;
+    }
+
+    .edit-category-form input {
+      margin-bottom: 10px;
+    }
+
+    .edit-category-form button {
+      margin-right: 5px;
+    }
+
+    .user-id-display {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 0.8em;
+      backdrop-filter: blur(10px);
+      color: white;
+    }
+
     @media (max-width: 768px) {
       .main-content {
         grid-template-columns: 1fr;
@@ -329,6 +490,14 @@
       .transaction-item>*:not(.transaction-category):not(.transaction-amount) {
         display: none;
       }
+
+      .period-selector {
+        flex-direction: column;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -336,9 +505,38 @@
 <body>
   <div class="container">
     <div class="header">
-      <h1>💰 Money Tracker</h1>
+      <div class="user-id-display" id="userIdDisplay">Loading...</div>
+      <div class="sync-status" id="syncStatus">Connecting...</div>
+      <h1>💰 Money Tracker Pro</h1>
+
+      <div class="period-selector">
+        <button class="period-btn" onclick="showPeriodManager()">📅 Manage Periods</button>
+        <span id="currentPeriodName" style="color: white; font-weight: bold;">All Time</span>
+      </div>
+
       <div class="grand-total" id="grandTotal">$0.00</div>
       <div>Total Revenue</div>
+    </div>
+
+    <div class="period-form" id="periodForm" style="display: none;">
+      <h3>Create/Select Time Period</h3>
+      <div class="form-row">
+        <input type="text" id="periodName" placeholder="Period name (e.g., Summer 2026)">
+        <input type="text" id="periodDescription" placeholder="Description (optional)">
+      </div>
+      <div class="form-row">
+        <input type="date" id="periodStartDate">
+        <input type="date" id="periodEndDate">
+      </div>
+      <button class="btn btn-small" onclick="createPeriod()">Create Period</button>
+      <button class="btn btn-small btn-danger" onclick="hidePeriodManager()">Close</button>
+
+      <div class="period-list" id="periodList">
+        <div class="period-item active" onclick="selectPeriod(null)">
+          <span>All Time</span>
+          <span>∞</span>
+        </div>
+      </div>
     </div>
 
     <div class="main-content">
@@ -382,6 +580,7 @@
             <input type="text" id="newCategoryName" placeholder="New category name">
             <button onclick="addCategory()">Add Category</button>
           </div>
+          <div id="existingCategories" style="margin-top: 15px;"></div>
         </div>
       </div>
 
@@ -403,26 +602,246 @@
     </div>
   </div>
 
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
   <script>
-    // Data storage
-    let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
-    let categories = JSON.parse(localStorage.getItem('categories')) || {
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyC5CeuH_W_h2tv4gWzIq6BM3iGPM3dZcG8",
+      authDomain: "money-tracker-sync-4f7e5.firebaseapp.com",
+      databaseURL: "https://money-tracker-sync-4f7e5-default-rtdb.firebaseio.com",
+      projectId: "money-tracker-sync-4f7e5",
+      storageBucket: "money-tracker-sync-4f7e5.appspot.com",
+      messagingSenderId: "123456789",
+      appId: "1:123456789:web:abcdef123456"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // Get user ID from URL hash or generate new one
+    function getUserId() {
+      let userId = window.location.hash.substring(1);
+      if (!userId) {
+        userId = 'user_' + Math.random().toString(36).substr(2, 9);
+        window.location.hash = userId;
+      }
+      return userId;
+    }
+
+    const userId = getUserId();
+    document.getElementById('userIdDisplay').textContent = `User: ${userId}`;
+
+    // Data storage references
+    let transactions = [];
+    let categories = {
       expense: ['Food', 'Transportation', 'Entertainment', 'Shopping', 'Bills'],
       income: ['Salary', 'Freelance', 'Investment', 'Other']
     };
+    let periods = [];
+    let currentPeriod = null;
     let currentType = 'expense';
+    let editingCategory = null;
+
+    // Firebase sync functions
+    function saveToFirebase(path, data) {
+      updateSyncStatus('syncing');
+      return database.ref(`${userId}/${path}`).set(data)
+        .then(() => updateSyncStatus('connected'))
+        .catch(error => {
+          console.error('Firebase save error:', error);
+          updateSyncStatus('error');
+        });
+    }
+
+    function loadFromFirebase(path) {
+      return database.ref(`${userId}/${path}`).once('value')
+        .then(snapshot => {
+          updateSyncStatus('connected');
+          return snapshot.val() || null;
+        })
+        .catch(error => {
+          console.error('Firebase load error:', error);
+          updateSyncStatus('error');
+          return null;
+        });
+    }
+
+    function listenToFirebase(path, callback) {
+      database.ref(`${userId}/${path}`).on('value', snapshot => {
+        updateSyncStatus('connected');
+        callback(snapshot.val() || null);
+      });
+    }
+
+    function updateSyncStatus(status) {
+      const syncElement = document.getElementById('syncStatus');
+      switch (status) {
+        case 'connected':
+          syncElement.textContent = '● Connected';
+          syncElement.className = 'sync-status connected';
+          break;
+        case 'syncing':
+          syncElement.textContent = '● Syncing...';
+          syncElement.className = 'sync-status syncing';
+          break;
+        case 'error':
+          syncElement.textContent = '● Offline';
+          syncElement.className = 'sync-status';
+          break;
+      }
+    }
 
     // Initialize the app
     document.addEventListener('DOMContentLoaded', function () {
       // Set today's date as default
       document.getElementById('date').valueAsDate = new Date();
 
-      // Load initial data
-      updateCategorySelect();
+      // Load data from Firebase
+      Promise.all([
+        loadFromFirebase('transactions'),
+        loadFromFirebase('categories'),
+        loadFromFirebase('periods')
+      ]).then(([txData, catData, perData]) => {
+        if (txData) transactions = txData;
+        if (catData) categories = catData;
+        if (perData) periods = perData;
+
+        // Set up real-time listeners
+        listenToFirebase('transactions', data => {
+          if (data) {
+            transactions = data;
+            updateCategoryTotals();
+            updateTransactionsList();
+            updateGrandTotal();
+          }
+        });
+
+        listenToFirebase('categories', data => {
+          if (data) {
+            categories = data;
+            updateCategorySelect();
+            displayExistingCategories();
+            updateCategoryTotals();
+          }
+        });
+
+        listenToFirebase('periods', data => {
+          if (data) {
+            periods = data;
+            updatePeriodsList();
+          }
+        });
+
+        // Initial UI update
+        updateCategorySelect();
+        displayExistingCategories();
+        updatePeriodsList();
+        updateCategoryTotals();
+        updateTransactionsList();
+        updateGrandTotal();
+      });
+    });
+
+    // Period management functions
+    function showPeriodManager() {
+      document.getElementById('periodForm').style.display = 'block';
+    }
+
+    function hidePeriodManager() {
+      document.getElementById('periodForm').style.display = 'none';
+    }
+
+    function createPeriod() {
+      const name = document.getElementById('periodName').value.trim();
+      const description = document.getElementById('periodDescription').value.trim();
+      const startDate = document.getElementById('periodStartDate').value;
+      const endDate = document.getElementById('periodEndDate').value;
+
+      if (!name || !startDate || !endDate) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      if (new Date(startDate) > new Date(endDate)) {
+        alert('Start date must be before end date');
+        return;
+      }
+
+      const period = {
+        id: Date.now(),
+        name: name,
+        description: description,
+        startDate: startDate,
+        endDate: endDate
+      };
+
+      periods.push(period);
+      saveToFirebase('periods', periods);
+
+      // Clear form
+      document.getElementById('periodName').value = '';
+      document.getElementById('periodDescription').value = '';
+      document.getElementById('periodStartDate').value = '';
+      document.getElementById('periodEndDate').value = '';
+    }
+
+    function updatePeriodsList() {
+      const periodList = document.getElementById('periodList');
+      let html = `
+                <div class="period-item ${!currentPeriod ? 'active' : ''}" onclick="selectPeriod(null)">
+                    <span>All Time</span>
+                    <span>∞</span>
+                </div>
+            `;
+
+      periods.forEach(period => {
+        const startDate = new Date(period.startDate).toLocaleDateString();
+        const endDate = new Date(period.endDate).toLocaleDateString();
+        html += `
+                    <div class="period-item ${currentPeriod && currentPeriod.id === period.id ? 'active' : ''}" 
+                         onclick="selectPeriod(${period.id})">
+                        <span>${period.name}</span>
+                        <span>${startDate} - ${endDate}</span>
+                    </div>
+                `;
+      });
+
+      periodList.innerHTML = html;
+    }
+
+    function selectPeriod(periodId) {
+      if (periodId === null) {
+        currentPeriod = null;
+        document.getElementById('currentPeriodName').textContent = 'All Time';
+      } else {
+        currentPeriod = periods.find(p => p.id === periodId);
+        document.getElementById('currentPeriodName').textContent = currentPeriod.name;
+      }
+
       updateCategoryTotals();
       updateTransactionsList();
       updateGrandTotal();
-    });
+      updatePeriodsList();
+      hidePeriodManager();
+    }
+
+    function getFilteredTransactions() {
+      if (!currentPeriod) {
+        return transactions;
+      }
+
+      const startDate = new Date(currentPeriod.startDate);
+      const endDate = new Date(currentPeriod.endDate);
+
+      return transactions.filter(transaction => {
+        const transactionDate = new Date(transaction.date);
+        return transactionDate >= startDate && transactionDate <= endDate;
+      });
+    }
 
     // Set transaction type
     function setType(type) {
@@ -430,6 +849,7 @@
       document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelector(`.type-btn.${type}`).classList.add('active');
       updateCategorySelect();
+      displayExistingCategories();
     }
 
     // Update category dropdown
@@ -445,6 +865,31 @@
       });
     }
 
+    // Display existing categories with edit/delete options
+    function displayExistingCategories() {
+      const container = document.getElementById('existingCategories');
+      let html = `<h4>Existing ${currentType} categories:</h4>`;
+
+      categories[currentType].forEach((category, index) => {
+        html += `
+                    <div class="category-item ${currentType}" style="margin-bottom: 5px;">
+                        <span class="category-name">${category}</span>
+                        <div class="category-actions">
+                            <button class="btn btn-small btn-edit" onclick="editCategory('${category}')">Edit</button>
+                            <button class="btn btn-small btn-danger" onclick="deleteCategory('${category}')">Delete</button>
+                        </div>
+                    </div>
+                    <div id="editForm-${category.replace(/\s+/g, '-')}" class="edit-category-form">
+                        <input type="text" id="editInput-${category.replace(/\s+/g, '-')}" value="${category}" placeholder="Category name">
+                        <button class="btn btn-small" onclick="saveCategoryEdit('${category}')">Save</button>
+                        <button class="btn btn-small btn-danger" onclick="cancelCategoryEdit('${category}')">Cancel</button>
+                    </div>
+                `;
+      });
+
+      container.innerHTML = html;
+    }
+
     // Add new category
     function addCategory() {
       const input = document.getElementById('newCategoryName');
@@ -452,8 +897,7 @@
 
       if (categoryName && !categories[currentType].includes(categoryName)) {
         categories[currentType].push(categoryName);
-        localStorage.setItem('categories', JSON.stringify(categories));
-        updateCategorySelect();
+        saveToFirebase('categories', categories);
         input.value = '';
 
         // Show confirmation
@@ -464,6 +908,77 @@
           originalBtn.textContent = 'Add Category';
           originalBtn.style.background = '#2ecc71';
         }, 1000);
+      }
+    }
+
+    // Edit category
+    function editCategory(categoryName) {
+      // Hide all other edit forms
+      document.querySelectorAll('.edit-category-form').forEach(form => {
+        form.style.display = 'none';
+      });
+
+      // Show the edit form for this category
+      const formId = `editForm-${categoryName.replace(/\s+/g, '-')}`;
+      document.getElementById(formId).style.display = 'block';
+      editingCategory = categoryName;
+    }
+
+    // Save category edit
+    function saveCategoryEdit(oldCategoryName) {
+      const inputId = `editInput-${oldCategoryName.replace(/\s+/g, '-')}`;
+      const newCategoryName = document.getElementById(inputId).value.trim();
+
+      if (newCategoryName && !categories[currentType].includes(newCategoryName)) {
+        // Update category in categories array
+        const index = categories[currentType].indexOf(oldCategoryName);
+        if (index > -1) {
+          categories[currentType][index] = newCategoryName;
+          saveToFirebase('categories', categories);
+        }
+
+        // Update transactions that use this category
+        transactions.forEach(transaction => {
+          if (transaction.type === currentType && transaction.category === oldCategoryName) {
+            transaction.category = newCategoryName;
+          }
+        });
+        saveToFirebase('transactions', transactions);
+      }
+
+      cancelCategoryEdit(oldCategoryName);
+    }
+
+    // Cancel category edit
+    function cancelCategoryEdit(categoryName) {
+      const formId = `editForm-${categoryName.replace(/\s+/g, '-')}`;
+      document.getElementById(formId).style.display = 'none';
+      editingCategory = null;
+    }
+
+    // Delete category
+    function deleteCategory(categoryName) {
+      if (confirm(`Are you sure you want to delete the category "${categoryName}"? All transactions in this category will be preserved but will show "Unknown" as the category.`)) {
+        // Remove from categories array
+        const index = categories[currentType].indexOf(categoryName);
+        if (index > -1) {
+          categories[currentType].splice(index, 1);
+          saveToFirebase('categories', categories);
+        }
+
+        // Update transactions that use this category to "Unknown"
+        transactions.forEach(transaction => {
+          if (transaction.type === currentType && transaction.category === categoryName) {
+            transaction.category = 'Unknown';
+          }
+        });
+        saveToFirebase('transactions', transactions);
+
+        // Add "Unknown" category if it doesn't exist
+        if (!categories[currentType].includes('Unknown')) {
+          categories[currentType].push('Unknown');
+          saveToFirebase('categories', categories);
+        }
       }
     }
 
@@ -481,25 +996,21 @@
       };
 
       transactions.unshift(transaction);
-      localStorage.setItem('transactions', JSON.stringify(transactions));
+      saveToFirebase('transactions', transactions);
 
       // Reset form
       this.reset();
       document.getElementById('date').valueAsDate = new Date();
-
-      // Update displays
-      updateCategoryTotals();
-      updateTransactionsList();
-      updateGrandTotal();
     });
 
     // Update category totals
     function updateCategoryTotals() {
       const totalsContainer = document.getElementById('categoryTotals');
+      const filteredTransactions = getFilteredTransactions();
       const totals = {};
 
       // Calculate totals
-      transactions.forEach(transaction => {
+      filteredTransactions.forEach(transaction => {
         const key = `${transaction.type}-${transaction.category}`;
         if (!totals[key]) {
           totals[key] = {
@@ -513,7 +1024,7 @@
 
       // Display totals
       if (Object.keys(totals).length === 0) {
-        totalsContainer.innerHTML = '<div class="empty-state">No transactions yet</div>';
+        totalsContainer.innerHTML = '<div class="empty-state">No transactions in this period</div>';
         return;
       }
 
@@ -535,14 +1046,15 @@
     // Update transactions list
     function updateTransactionsList() {
       const listContainer = document.getElementById('transactionsList');
+      const filteredTransactions = getFilteredTransactions();
 
-      if (transactions.length === 0) {
-        listContainer.innerHTML = '<div class="empty-state">No transactions recorded yet. Add your first transaction above!</div>';
+      if (filteredTransactions.length === 0) {
+        listContainer.innerHTML = '<div class="empty-state">No transactions in this period. Add your first transaction above!</div>';
         return;
       }
 
       let html = '';
-      transactions.slice(0, 20).forEach(transaction => {
+      filteredTransactions.slice(0, 20).forEach(transaction => {
         const date = new Date(transaction.date);
         const formattedDate = date.toLocaleDateString('en-US', {
           month: 'short',
@@ -568,7 +1080,8 @@
 
     // Update grand total
     function updateGrandTotal() {
-      const grandTotal = transactions.reduce((total, transaction) => {
+      const filteredTransactions = getFilteredTransactions();
+      const grandTotal = filteredTransactions.reduce((total, transaction) => {
         return transaction.type === 'income'
           ? total + transaction.amount
           : total - transaction.amount;
@@ -582,10 +1095,7 @@
     // Delete transaction
     function deleteTransaction(id) {
       transactions = transactions.filter(t => t.id !== id);
-      localStorage.setItem('transactions', JSON.stringify(transactions));
-      updateCategoryTotals();
-      updateTransactionsList();
-      updateGrandTotal();
+      saveToFirebase('transactions', transactions);
     }
 
     // Add enter key support for category addition
